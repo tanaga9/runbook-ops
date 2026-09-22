@@ -1,0 +1,16 @@
+add_newline = false
+format = '[runbook](bold cyan) $directory$python$character'
+
+[directory]
+truncation_length = 3
+
+[python]
+format = '[venv:$virtualenv]($style) '
+style = 'dimmed cyan'
+detect_extensions = []
+detect_files = []
+detect_folders = []
+
+[character]
+success_symbol = '[❯](bold cyan)'
+error_symbol = '[❯](bold red)'

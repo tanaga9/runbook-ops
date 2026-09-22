@@ -1,0 +1,18 @@
+{
+  "name": "runbook-ops",
+  "version": "0.1.0",
+  "description": "Develop readable runbooks and run them within explicit scope.",
+  "author": {
+    "name": "tanaga9"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Runbook Ops",
+    "shortDescription": "Develop and run readable procedures with Codex.",
+    "longDescription": "Develop a procedure collaboratively, then run it with current-state checks and verification. Execution results stay in the conversation.",
+    "developerName": "tanaga9",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use develop-runbook to create or improve a procedure, or run-runbook to carry out a ready procedure within my stated scope."
+  }
+}
