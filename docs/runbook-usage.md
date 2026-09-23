@@ -17,6 +17,8 @@ The bundled Starship profile is used only for this prompt. Existing prompt hooks
 
 ## Execution
 
+Runme execution is not currently supported. These runbooks assume a persistent interactive zsh session, including shell variables and interactive selection; Runme-specific session setup and block execution have not been adapted or verified. Use the terminal or the `run-runbook` Skill.
+
 Follow the documented Steps. Headings may name the action directly or use Check / Act / Verify, separately or combined. These are review perspectives, not required sections; the responsibilities below still apply.
 
 - Keep case inputs in the same shell. Read each command before executing it.
