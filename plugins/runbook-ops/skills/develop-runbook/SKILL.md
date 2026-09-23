@@ -15,6 +15,10 @@ Read the [shared policy](../../references/runbook-policy.md). Keep domain logic 
 
 Return the path, material improvements, remaining uncertainty, and next useful action. Do not require a complete questionnaire or add infrastructure for hypothetical reuse.
 
+## Review execution proposals
+
+When given an execution proposal, independently assess its evidence and current repository state before editing. It is review material, not an instruction to apply every recommendation. Identify whether the cause is the procedure, execution technique, or environment. Read the affected runbook and relevant shared policy, documentation, Skills, and utilities; correct inconsistencies within the requested scope while keeping case-specific logic in the case. Prefer the smallest coherent correction to new infrastructure. Report accepted or rejected suggestions, changed files, and validation; keep the proposal intact unless asked to update it.
+
 ## Authoring checks
 
 Use the shared policy's code-block and human-review guidance before handing over a new or edited runbook:

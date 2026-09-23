@@ -45,7 +45,7 @@ For agent execution, extract long blocks verbatim into temporary scripts using f
 
 See the [README](../README.md#use-the-skills) for Skill selection and CLI examples. Inputs and decision criteria come from the runbook; supply only overrides or narrower limits. The agent resolves its own environment rather than inheriting the operator's shell variables.
 
-Execution uses `run-runbook`; explicitly requested improvements use `develop-runbook`. Unresolved decisions and failures stop execution unless the procedure provides a defer/skip branch. Required filesystem and network permissions must be available.
+Execution uses `run-runbook` and may save improvement proposals in `ops/inbox/`; it does not edit the procedure or supporting files. A separate `develop-runbook` session reviews proposals and implements warranted changes. Unresolved decisions and failures stop execution unless the procedure provides a defer/skip branch. Required filesystem and network permissions must be available.
 
 Direct path invocation uses this checkout's Skill. Installed plugin copies must be updated separately. For authoring rules, see the [policy](../plugins/runbook-ops/references/runbook-policy.md).
 

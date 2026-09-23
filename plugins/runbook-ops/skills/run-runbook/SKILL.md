@@ -5,7 +5,7 @@ description: Carry out or resume a specified ready runbook with current-state ch
 
 # Run a runbook
 
-Read the [shared policy](../../references/runbook-policy.md). Execute the procedure, not a transcript of earlier runs. Do not edit the runbook, helper code, or shared environment as a side effect of running it; propose improvements in the conversation for `develop-runbook`.
+Read the [shared policy](../../references/runbook-policy.md). Execute the procedure, not a transcript of earlier runs. Do not edit the runbook, helper code, or shared environment as a side effect of running it; Record actionable improvements as proposals for a separate `develop-runbook` session. Do not switch to authoring during execution or launch another model to apply them.
 
 ## Establish this run
 
@@ -35,3 +35,12 @@ If scope is unclear, continue safe authorized investigation and ask only for the
 ## Report
 
 Report completed and verified actions, skipped/deferred work, failures, and the next required decision in the conversation or CLI final output. Distinguish partial completion from success. Do not write execution dates, logs, or Outcome sections into the runbook, and do not change its readiness status after a run.
+
+## Improvement proposals
+
+In interactive and non-interactive execution, save actionable procedural issues to the target project's `ops/inbox/` (beside `ops/runbooks/`). This is the only procedure-maintenance write allowed by this Skill; operational writes remain limited to the runbook's authorized scope. Do not edit runbooks, implementation code, Skills, or documentation to fix a run. Stop dependent work if continuation requires such a fix; use an existing defer/recovery branch when applicable.
+
+- Write a concise English Markdown proposal named `<runbook-stem>-improvement-proposal.md`. If it exists, use a numbered suffix; do not overwrite earlier proposals. Create the inbox when permitted. If writes are unavailable or the request is read-only, include the proposal in the final response instead.
+- Include the affected runbook and Step, observed behavior versus expected behavior, minimal relevant evidence, verified current state and remaining work, suggested changes, and acceptance checks. Distinguish execution mistakes from procedure defects and observations from hypotheses. Omit secrets and full transcripts.
+- Suggest review of related documentation or shared components when warranted, without implementing changes. Do not create an empty proposal for a successful run with no actionable issue.
+- Report the saved path and any blocked or deferred work in the final response. A proposal does not resolve the issue or authorize continued dependent operations.

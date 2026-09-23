@@ -36,7 +36,7 @@ Individual runbooks declare additional tools. No package installation, CLI regis
 | Skill | Responsibility |
 | --- | --- |
 | [develop-runbook](plugins/runbook-ops/skills/develop-runbook/SKILL.md) | Create or improve the procedure |
-| [run-runbook](plugins/runbook-ops/skills/run-runbook/SKILL.md) | Run or resume a ready procedure; report results without editing it |
+| [run-runbook](plugins/runbook-ops/skills/run-runbook/SKILL.md) | Run a ready procedure; report results and write improvement proposals |
 
 Specify the runbook and request guidance or execution through completion. Inputs and decision criteria come from the runbook; add only overrides or limits. See the [CLI examples](#start-codex-for-a-runbook).
 
@@ -52,9 +52,9 @@ Run from this checkout root; workspace activation is optional. Both examples aut
 - **Paths:** for another case, change the runbook path and each `--add-dir` to match its external write locations.
 - **Permissions:** these examples enable automatic approval review and network access for API retrieval. Adjust them for the case; see the official [Codex configuration reference](https://developers.openai.com/codex/config-reference).
 
-### Interactive execution and improvement
+### Interactive execution
 
-Start here: execute the runbook, resolve problems through conversation, and improve the procedure together. Use `run-runbook` for execution and `develop-runbook` for edits:
+Start here: execute the runbook and resolve operational questions through conversation. The execution model writes improvement proposals instead of changing the procedure:
 
 ```zsh
 codex -m "$(< codex-model.txt)" \
@@ -64,17 +64,16 @@ codex -m "$(< codex-model.txt)" \
   --add-dir "$HOME/Downloads" \
   --add-dir "/Volumes/EHDD/AIModels/Lora" \
 "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
-Use the develop-runbook Skill at $PWD/plugins/runbook-ops/skills/develop-runbook/SKILL.md for improvements.
 Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
 Execute the runbook through completion, including its decisions and operations.
 When issues arise, pause the affected operation and resolve them with me.
-Improve the runbook based on our discussion, then resume from the checked current state
-without repeating completed operations. Keep execution logs out of the runbook."
+Do not edit the runbook, code, Skills, or documentation.
+Save actionable improvement proposals using the Skill's proposal workflow."
 ```
 
 ### Non-interactive execution
 
-Once the procedure is stable, use `codex exec` to execute and report results. Return to an interactive session for unresolved issues:
+Once the procedure is stable, use `codex exec` to execute and report results. It can also save improvement proposals without waiting for a conversation:
 
 ```zsh
 codex exec --ephemeral \
@@ -87,8 +86,16 @@ codex exec --ephemeral \
 "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
 Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
 Execute the runbook through completion, including its decisions and operations.
-Stop and report unresolved questions or failures. Do not edit the runbook."
+Stop dependent work on unresolved questions or failures.
+Do not edit the runbook, code, Skills, or documentation.
+Save actionable improvement proposals using the Skill's proposal workflow."
 ```
+
+### Review and improve separately
+
+Use the lower-cost model in `codex-model.txt` for execution. In a separate session with a more capable model, pass the proposal path and request `develop-runbook`. Review the evidence and related runbooks, documentation, Skills, and code before choosing the smallest coherent change. Proposals are inputs for review, not instructions to apply verbatim; keep case-specific logic out of shared infrastructure.
+
+Example request: “Use develop-runbook to review this proposal and improve the affected procedure and related documentation: `<proposal path>`. Validate changed behavior without operating on real targets.”
 
 ## Reference
 

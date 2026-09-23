@@ -6,12 +6,13 @@
 | `runbook.command` | macOS launcher for an interactive workspace |
 | `shell/` | Enter/leave a venv, isolated history, and prompt; no task logic |
 | `plugins/runbook-ops/` | Skills and policy for writing and following readable procedures |
+| `ops/inbox/` | Optional task briefs and execution improvement proposals for review |
 | `ops/runbooks/` | Case-specific goals, inputs, choices, operations, and verification |
 | `src/` | Small, domain-independent utilities; no case decisions or workflow execution |
 | `tests/` | Automated tests for `src/` utilities only |
 | `.venv/`, `.state/` | Untracked runtime and history |
 
-The two Skills are the behavioral entrypoints: development changes the procedure; execution follows it within the request and reports results. The shell is optional workspace support, not the execution engine. Model selection belongs to Codex invocation, not the runbook format.
+The two Skills are the behavioral entrypoints: development changes the procedure; execution follows it within the request, reports results, and records improvement proposals. A separate authoring session evaluates proposals across the affected procedure and supporting documents before editing. The shell is optional workspace support, not the execution engine. Model selection belongs to Codex invocation, not the runbook format.
 
 Runbooks own task-specific selection, decisions, operations, and verification. Shared utilities handle only narrowly defined mechanics; their use must not hide the procedure. Add shared code for demonstrated reuse, not to accommodate a single case.
 
