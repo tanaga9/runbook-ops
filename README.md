@@ -40,7 +40,7 @@ Individual runbooks declare additional tools. No package installation, CLI regis
 
 Specify the runbook and request guidance or execution through completion. Inputs and decision criteria come from the runbook; add only overrides or limits. See the [CLI examples](#start-codex-for-a-runbook).
 
-Humans and agents follow the same **Check → Act → Verify** procedure. Commands remain visible in the Markdown.
+Humans and agents follow the same Steps. Headings describe the work; **Check / Act / Verify** guide the necessary checks, operations, and verification. Commands remain visible in the Markdown.
 
 Keep one procedure per case under the project's `ops/runbooks/`; `ops/inbox/` is optional. General Notes can remain in their Vault. Improve instructions with lessons learned, without adding execution logs or usage dates. Extract a Skill or script only after the work has been validated.
 

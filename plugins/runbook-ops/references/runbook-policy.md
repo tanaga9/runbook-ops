@@ -7,7 +7,7 @@ A runbook is a procedure that humans and AI can both understand and carry out. S
 Use only `status: draft` or `status: ready` in YAML Front Matter, followed by one H1 title. Readiness describes the procedure, not execution progress, authorization, or current conditions.
 
 - Include the goal, scope, case prerequisites, inputs, working directory, Steps, decision criteria, and necessary recovery.
-- Use **Runbook → Step → Check / Act / Verify** as the hierarchy. Adapt it to the case rather than copying another runbook's length or operations.
+- Use **Runbook → Step** as the hierarchy. Each Step completes a meaningful investigation, decision, or operation; name it by its purpose. Prefer verb + object headings, such as `Collect evidence` or `Choose a destination`, within each Step. Check / Act / Verify are also valid labels, not a required vocabulary.
 - Keep references only where they help perform or understand the work. Never include secrets.
 - Omit Outcome sections, usage dates, logs, transcripts, and per-run progress. Keep actual results and pending work in the conversation unless a separate log is requested.
 - Treat shared usage conventions as known. Link them rather than repeating shell setup or detailed “How to use” sections. A brief AI instruction is enough: “AI agents: Use the `run-runbook` skill when working on this runbook.”
@@ -30,15 +30,21 @@ If a command-preparing helper is necessary, show the concrete command and its ta
 
 ## Check / Act / Verify
 
-| Phase | Responsibility |
+| Review perspective | Responsibility |
 | --- | --- |
 | Check | Establish current state, inputs, and whether to proceed, skip, or stop |
 | Act | Perform the needed operation within the authorized scope |
 | Verify | Observe the result against explicit success criteria |
 
-These are responsibilities, not a quota of three commands. Pure investigation need not introduce a state-changing action.
+Use these perspectives to check completeness, not to impose headings or a fixed section sequence. Do not define Prepare, Select, or Decide as additional mandatory phases. Choose a natural structure for each Step:
 
-Check may retrieve and save evidence when useful for the next decision. State network access, save locations, and effects; preserve existing files and validate retrieved data. Keep the main operational change in Act.
+- **Check only:** investigate, collect evidence, or resolve inputs without a main operational change.
+- **Check / Act / Verify:** make the precondition, change, and result separately reviewable.
+- **Purpose-based or combined headings:** use the action name alone when its responsibilities are clear, or merge related responsibilities under one heading when the unit remains understandable. Keep preconditions and success criteria explicit; do not merge across a required user decision or let failures fall through.
+
+Do not add empty phases to satisfy a template. Make each Step's entry and completion conditions clear. Preserve the causal order of prerequisite checks, operations, and result verification regardless of headings. Steps may build on earlier results, but recheck changeable prerequisites before acting. When processing repeated items, state which Step restarts the cycle and which inputs must be refreshed.
+
+Check may retrieve and save evidence when useful for the next decision. State network access, save locations, and effects; preserve existing files and validate retrieved data. Make the main operational change and its effects explicit regardless of the heading.
 
 Keep the normal path executable in order. Place optional, deferred, and recovery actions in separate conditional sections with a trigger and return point. Keep immediate guards beside the operation they protect; finishing the normal path must not lead into recovery commands.
 

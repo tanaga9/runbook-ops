@@ -17,6 +17,8 @@ The bundled Starship profile is used only for this prompt. Existing prompt hooks
 
 ## Execution
 
+Follow the documented Steps. Headings may name the action directly or use Check / Act / Verify, separately or combined. These are review perspectives, not required sections; the responsibilities below still apply.
+
 - Keep case inputs in the same shell. Read each command before executing it.
 - **Check:** inspect state and collect evidence. Downloads and evidence files may be saved here when their effects are stated.
 - **Act:** perform the needed operation after reviewing targets and scope.
