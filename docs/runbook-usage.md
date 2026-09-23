@@ -21,6 +21,7 @@ Runme execution is not currently supported. These runbooks assume a persistent i
 
 Follow the documented Steps. Headings may name the action directly or use Check / Act / Verify, separately or combined. These are review perspectives, not required sections; the responsibilities below still apply.
 
+- Use documented code blocks intact where possible. If adapting them, preserve failure branches; a failed check must prevent dependent operations.
 - Read each command before executing it. Keep inputs in one shell or explicitly pass them between invocations.
 - Use task-specific variable names; zsh reserves names such as the read-only `status`.
 - **Check:** inspect state and collect evidence. Downloads and evidence files may be saved here when their effects are stated.
@@ -30,6 +31,15 @@ Follow the documented Steps. Headings may name the action directly or use Check 
 - Keep recovery and optional actions separate from the normal path. After interruption or a wrapper error, inspect actual results before retrying; the operation may already have completed.
 
 Use short native commands or visible Python. Helpers print data or reports; do not automatically evaluate their output. Agents perform operational changes only within explicit authorization. Full metadata is for AI investigation, not a checklist humans must read line by line.
+
+## Long code blocks
+
+For agent execution, extract long blocks verbatim into temporary scripts using file tools, rather than pasting them into an interactive terminal. Preserve the whole block, including shell guards and heredoc delimiters.
+
+- Check shell syntax with `zsh -n` before non-interactive execution. This does not check Python inside heredocs; syntax-check literal Python separately without executing it when needed.
+- Set the documented working directory and pass required inputs explicitly, including arrays. Keep dependent commands in the same shell or transfer their outputs explicitly; child-shell assignments do not update the parent.
+- Execute only the selected block and its necessary input setup, not the entire runbook. Remove temporary scripts afterward.
+- If input is corrupted, stop dependent work and inspect actual files before retrying. Some operations may already have completed.
 
 ## AI assistance
 

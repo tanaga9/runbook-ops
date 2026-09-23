@@ -63,13 +63,13 @@ codex -m "$(< codex-model.txt)" \
   --approve-for-me \
   --add-dir "$HOME/Downloads" \
   --add-dir "/Volumes/EHDD/AIModels/Lora" \
-  "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
-   Use the develop-runbook Skill at $PWD/plugins/runbook-ops/skills/develop-runbook/SKILL.md for improvements.
-   Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
-   Execute the runbook through completion, including its decisions and operations.
-   When issues arise, pause the affected operation and resolve them with me.
-   Improve the runbook based on our discussion, then resume from the checked current state
-   without repeating completed operations. Keep execution logs out of the runbook."
+"Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
+Use the develop-runbook Skill at $PWD/plugins/runbook-ops/skills/develop-runbook/SKILL.md for improvements.
+Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
+Execute the runbook through completion, including its decisions and operations.
+When issues arise, pause the affected operation and resolve them with me.
+Improve the runbook based on our discussion, then resume from the checked current state
+without repeating completed operations. Keep execution logs out of the runbook."
 ```
 
 ### Non-interactive execution
@@ -84,10 +84,10 @@ codex exec --ephemeral \
   --approve-for-me \
   --add-dir "$HOME/Downloads" \
   --add-dir "/Volumes/EHDD/AIModels/Lora" \
-  "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
-   Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
-   Execute the runbook through completion, including its decisions and operations.
-   Stop and report unresolved questions or failures. Do not edit the runbook."
+"Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
+Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
+Execute the runbook through completion, including its decisions and operations.
+Stop and report unresolved questions or failures. Do not edit the runbook."
 ```
 
 ## Reference

@@ -96,32 +96,87 @@ fi
 
 #### Find the matching HTML
 
-Decode filename fields, match the exact model name, and accept exactly one page. Errors stop selection; the NUL delimiter preserves unusual paths.
+Match the page's labeled file hash first; fall back to an exact filename only when that page has no supported hash. Names and titles alone need not resemble each other.
+
+| Evidence | Rule |
+| --- | --- |
+| SHA256 / AutoV2 | SHA-256 of the whole file / its first 10 hex characters |
+| AutoV3 | First 12 hex characters of SHA-256 of the tensor data, excluding the 8-byte length and JSON header |
+| Exact filename | Fallback when no supported file hash is shown |
+| Multiple matches or conflicting hashes | Defer; do not choose by title similarity or timestamps |
+
+Only labeled hashes directly following the page's `Hash` field are used, not hashes in sample-generation descriptions. HTML layout changes may require adjusting extraction. The code prints the accepted evidence and requires one matching page.
 
 ```zsh
 pair_html=''
 pair_pages=( "$pair_source"/*.html(.Nm-7om) )
-if pair_html_json=$(setopt pipefail; python3 "$pair_html_reader" "${pair_pages[@]}" | jq '
-  [.[] | {path, filenames: [.values[] | select(endswith(".safetensors") and (contains("/") | not))] | unique}]') &&
-  pair_matches=$(print -r -- "$pair_html_json" | jq -c --arg name "${pair_model:t}" \
-    '[.[] | select(.filenames | index($name)) | .path]'); then
-  print -r -- "$pair_matches" | jq .
-  if [[ -n "$pair_model" ]] && print -r -- "$pair_matches" | jq -e 'length == 1' > /dev/null; then
+if pair_matches=$(python3 - "$pair_model" "${pair_pages[@]}" <<'PYTHON'
+import hashlib
+import json
+import re
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd() / "src"))
+from html_fields import read_fields
+
+model = Path(sys.argv[1])
+if model.is_symlink() or not model.is_file():
+    sys.exit("STOP: select a regular model file first.")
+before = model.stat()
+whole, tensors = hashlib.sha256(), hashlib.sha256()
+with model.open("rb") as stream:
+    prefix = stream.read(8)
+    offset = 8 + int.from_bytes(prefix, "little")
+    if len(prefix) != 8 or not 8 < offset < before.st_size:
+        sys.exit("STOP: invalid safetensors header length.")
+    whole.update(prefix)
+    position = 8
+    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+        whole.update(chunk)
+        tensors.update(chunk[max(0, offset - position):])
+        position += len(chunk)
+after = model.stat()
+fingerprint = lambda st: (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+if fingerprint(before) != fingerprint(after):
+    sys.exit("STOP: model changed during hashing; recheck before proceeding.")
+hashes = {"sha256": whole.hexdigest(), "autov2": whole.hexdigest()[:10],
+          "autov3": tensors.hexdigest()[:12]}
+hash_matches, name_matches = [], []
+for name in sys.argv[2:]:
+    page = read_fields(name)
+    texts = page["text"]
+    declared = []
+    for i in range(len(texts) - 2):
+        kind = texts[i + 1].strip().lower()
+        value = texts[i + 2].strip().lower()
+        if texts[i].strip().lower() == "hash" and kind in hashes:
+            if not re.fullmatch(r"[0-9a-f]{" + str(len(hashes[kind])) + "}", value):
+                sys.exit(f"STOP: invalid {kind} field in {name}")
+            declared.append((kind, value))
+    if declared:
+        if all(hashes[kind] == value for kind, value in declared):
+            hash_matches.append(name)
+            print(f"MATCH: {name}: " + ", ".join(f"{k}={v}" for k, v in declared), file=sys.stderr)
+    elif model.name in page["values"]:
+        name_matches.append(name)
+        print(f"FILENAME MATCH: {name}", file=sys.stderr)
+print(json.dumps(hash_matches or name_matches))
+PYTHON
+); then
+  if print -r -- "$pair_matches" | jq -e 'length == 1' > /dev/null; then
     IFS= read -r -d '' pair_html < <(print -r -- "$pair_matches" | jq -j '.[0], "\u0000"')
     printf 'Selected HTML: %s\n' "$pair_html"
   else
+    print -r -- "$pair_matches" | jq .
     printf 'DEFER: expected one matching HTML.\n'
   fi
 else
-  printf 'STOP: HTML extraction or matching failed.\n'
+  printf 'STOP: hashing or HTML extraction failed.\n'
 fi
 ```
 
-| Result | Next action |
-| --- | --- |
-| One selected HTML | Inspect source stability below |
-| No match or multiple matches | [Defer this pair](#defer-this-pair) |
-| Tool error | [Investigate](#investigate-or-resume) |
+Continue with one selected HTML. [Defer](#defer-this-pair) on no match or multiple matches; [investigate](#investigate-or-resume) tool errors. Hash evidence identifies the pair, not its category. Step 2 still verifies any JSON against the full-file SHA-256.
 
 #### Check source stability
 
@@ -129,6 +184,13 @@ Inspect size and timestamps; continue when both sources are stable. See [Changin
 
 ```zsh
 ls -ld "$pair_model" "$pair_html"
+pair_source_fingerprint=$(python3 - "$pair_model" "$pair_html" <<'PYTHON'
+import json, sys
+from pathlib import Path
+print(json.dumps([(str(Path(p).resolve()), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+                  for p in sys.argv[1:] for st in [Path(p).stat()]]))
+PYTHON
+) || printf 'STOP: source snapshot failed; do not continue.\n'
 ```
 
 ## Step 2: Review evidence and choose a category
@@ -399,82 +461,92 @@ printf 'Model: %s → %s\nHTML: %s → %s\n' "$pair_model" "$pair_target_model" 
 printf 'JSON (%s): %s → %s\n' "$pair_json_state" "$pair_json" "$pair_target_json"
 ```
 
-**Check for collisions before moving.** Missing destination files are expected.
+Review the displayed paths and category before running Act. Keep the sources and both directories stable through verification.
 
-| Result | Next action |
-| --- | --- |
-| `READY` | Move the files below |
-| `STOP` | Resolve the reported missing input, access problem, or collision |
+### Act
+
+Run this block intact. It validates inputs before any move, then checks each move before continuing. `mv -n` prevents overwriting; a skipped move also stops the sequence. These moves are not atomic: after a partial failure, inspect both locations before resuming.
 
 ```zsh
-python3 - "$pair_root" "$pair_category" \
+pair_move_ok=0
+if python3 - "$pair_root" "$pair_category" "$pair_json_state" "$pair_source_fingerprint" \
+  "$pair_model" "$pair_html" "$pair_json" \
   "$pair_target_model" "$pair_target_html" "$pair_target_json" <<'PYTHON'
+import hashlib
+import json
 import os
 import sys
 from pathlib import Path
 
-root, category, *targets = sys.argv[1:]
-if not root or not category or category in (".", "..") or "/" in category:
-    sys.exit("STOP: provide a root and one category name.")
-directory = Path(root).expanduser().resolve() / category
-if directory.is_symlink() or not directory.is_dir() or not os.access(directory, os.R_OK | os.W_OK | os.X_OK):
-    sys.exit(f"STOP: category is missing, linked, or inaccessible: {directory}")
-issues, seen = [], set()
-for value in targets:
-    if not value:
-        issues.append("Destination is unset.")
-        continue
-    path = Path(value).expanduser()
-    path = path.parent.resolve() / path.name
-    if path.parent != directory:
-        issues.append(f"Outside category: {path}")
-    if path in seen:
-        issues.append(f"Duplicate destination: {path}")
-    seen.add(path)
-    if os.path.lexists(path):
-        issues.append(f"Destination already exists: {path}")
-if issues:
-    sys.exit("STOP:\n  " + "\n  ".join(issues))
-print("READY: all destinations are unused.")
+try:
+    root, category, state, snapshot, *names = sys.argv[1:]
+    if not root or not category or category in (".", "..") or any(c in category for c in "/\n\r"):
+        raise ValueError("Provide a root and one category name.")
+    if state not in ("ready", "unavailable") or not all(names):
+        raise ValueError("Missing paths or unresolved JSON state.")
+    directory = Path(root).resolve() / category
+    if directory.is_symlink() or not directory.is_dir() or not os.access(directory, os.R_OK | os.W_OK | os.X_OK):
+        raise ValueError(f"Category missing, linked, or inaccessible: {directory}")
+    sources = list(map(Path, names[:3]))
+    targets = list(map(Path, names[3:]))
+    expected = [directory / sources[0].name, directory / sources[1].name,
+                (directory / sources[1].name).with_suffix(".json")]
+    if sources[2] != sources[1].with_suffix(".json"):
+        raise ValueError("JSON must be beside the selected HTML with the same stem.")
+    for target, wanted in zip(targets, expected):
+        if target.parent.resolve() / target.name != wanted or os.path.lexists(target):
+            raise ValueError(f"Unexpected or occupied destination: {target}")
+    if len(set(expected)) != 3:
+        raise ValueError("Duplicate destinations.")
+    for source in sources[:3 if state == "ready" else 2]:
+        if source.is_symlink() or not source.is_file() or not os.access(source, os.R_OK):
+            raise ValueError(f"Source missing, linked, or unreadable: {source}")
+    if state == "unavailable" and os.path.lexists(sources[2]):
+        raise ValueError("Unexpected JSON exists; repeat JSON collection.")
+    current = [(str(p.resolve()), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+               for p in sources[:2] for st in [p.stat()]]
+    if json.loads(snapshot) != json.loads(json.dumps(current)):
+        raise ValueError("Model or HTML changed; repeat pair and evidence checks.")
+    if state == "ready":
+        digest = hashlib.sha256()
+        with sources[0].open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        payload = json.loads(sources[2].read_text())
+        if not any(str(item.get("hashes", {}).get("SHA256", "")).lower() == digest.hexdigest()
+                   for item in payload["files"]):
+            raise ValueError("JSON no longer matches the model.")
+    latest = [(str(p.resolve()), st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+              for p in sources[:2] for st in [p.stat()]]
+    if latest != current:
+        raise ValueError("Sources changed during validation; recheck before moving.")
+    print("READY: sources, JSON state, and destinations checked.")
+except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+    sys.exit(f"STOP: {error}")
 PYTHON
-```
-
-All three destinations must be unused, even when JSON is unavailable. Check the source JSON state before moving.
-
-```zsh
-if [[ "$pair_json_state" != ready && "$pair_json_state" != unavailable ]]; then
-  printf 'STOP: JSON has not been verified or recorded as unavailable.\n'
-elif [[ "$pair_json_state" == ready && ( ! -f "$pair_json" || -L "$pair_json" ) ]]; then
-  printf 'STOP: verified source JSON is missing or changed.\n'
+then
+  pair_move_ok=1
+  pair_move_sources=( "$pair_model" "$pair_html" )
+  pair_move_targets=( "$pair_target_model" "$pair_target_html" )
+  if [[ "$pair_json_state" == ready ]]; then
+    pair_move_sources+=( "$pair_json" )
+    pair_move_targets+=( "$pair_target_json" )
+  fi
+  for pair_index in {1..${#pair_move_sources[@]}}; do
+    if mv -vn -- "${pair_move_sources[$pair_index]}" "${pair_move_targets[$pair_index]}" &&
+      [[ ! -e "${pair_move_sources[$pair_index]}" && ! -L "${pair_move_sources[$pair_index]}" &&
+         -f "${pair_move_targets[$pair_index]}" && ! -L "${pair_move_targets[$pair_index]}" ]]; then
+      printf 'MOVED: %s\n' "${pair_move_targets[$pair_index]}"
+    else
+      printf 'STOP: move failed or skipped; inspect both locations before continuing.\n'
+      pair_move_ok=0
+      break
+    fi
+  done
 else
-  printf 'READY: source JSON state is %s.\n' "$pair_json_state"
+  printf 'STOP: pre-move validation failed; no moves attempted.\n'
 fi
-```
-
-### Act
-
-Move each file separately.
-
-- `-n` prevents overwriting; `-v` shows the move.
-- Keep both directories stable during the operation.
-- If a move fails or is skipped, inspect before continuing. A successful exit alone does not prove movement.
-
-```zsh
-mv -vn -- "$pair_model" "$pair_target_model"
-```
-
-```zsh
-mv -vn -- "$pair_html" "$pair_target_html"
-```
-
-```zsh
-if [[ "$pair_json_state" == ready ]]; then
-  mv -vn -- "$pair_json" "$pair_target_json"
-elif [[ "$pair_json_state" == unavailable ]]; then
-  printf 'SKIPPED: JSON unavailable; retry retrieval later.\n'
-else
-  printf 'STOP: unresolved JSON state.\n'
-fi
+(( pair_move_ok ))
 ```
 
 ### Verify
@@ -530,10 +602,10 @@ Verification checks locations, not byte-for-byte integrity.
 | Result | Next action |
 | --- | --- |
 | Move `VERIFIED` | Return to [Step 1](#step-1-select-the-latest-eligible-pair) for another pair |
-| Step 1 returns `NONE` | Finish this pass |
+| Step 1 returns `NONE` | Finish this pass; distinguish completed work from deferred models and pending JSON |
 | Move unconfirmed | Inspect both locations; follow [delayed visibility guidance](#changing-files-or-delayed-visibility) if needed |
 
-Keep pending JSON retrievals separate from successful moves. Retry them later using the moved files' paths. Conditional actions below are not subsequent normal steps.
+Report deferred model paths and pending JSON retrievals in the conversation; `NONE` means no remaining eligible, non-deferred models, not an empty Downloads folder. Unmatched HTML may remain. Keep pending JSON retrievals separate from successful moves. Retry them later using the moved files' paths. Conditional actions below are not subsequent normal steps.
 
 ## Conditional actions
 
