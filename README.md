@@ -46,39 +46,49 @@ Keep one procedure per case under the project's `ops/runbooks/`; `ops/inbox/` is
 
 ## Start Codex for a runbook
 
-### Human-led execution
+Run from this checkout root; workspace activation is optional. Both examples authorize Codex to execute the runbook.
 
-From this checkout root, start a new interactive session using `gpt-5.6-luna` with medium reasoning:
+- **Model:** edit [codex-model.txt](codex-model.txt), containing one model name without quotes or comments. It also applies to the runbook's optional Codex recommendation.
+- **Paths:** for another case, change the runbook path and each `--add-dir` to match its external write locations.
+- **Permissions:** these examples enable automatic approval review and network access for API retrieval. Adjust them for the case; see the official [Codex configuration reference](https://developers.openai.com/codex/config-reference).
+
+### Interactive execution and improvement
+
+Start here: execute the runbook, resolve problems through conversation, and improve the procedure together. Use `run-runbook` for execution and `develop-runbook` for edits:
 
 ```zsh
-codex -m gpt-5.6-luna \
+codex -m "$(< codex-model.txt)" \
   -c 'model_reasoning_effort="medium"' \
+  -c 'sandbox_workspace_write.network_access=true' \
+  --approve-for-me \
+  --add-dir "$HOME/Downloads" \
+  --add-dir "/Volumes/EHDD/AIModels/Lora" \
   "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
+   Use the develop-runbook Skill at $PWD/plugins/runbook-ops/skills/develop-runbook/SKILL.md for improvements.
    Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
-   Start in human-led mode: inspect current state, explain the next action,
-   and let me execute file changes. Do not edit the runbook."
+   Execute the runbook through completion, including its decisions and operations.
+   When issues arise, pause the affected operation and resolve them with me.
+   Improve the runbook based on our discussion, then resume from the checked current state
+   without repeating completed operations. Keep execution logs out of the runbook."
 ```
 
-Replace the runbook path for another case. Workspace activation is optional for starting Codex; it provides the dedicated venv, history, and prompt.
+### Non-interactive execution
 
-### Agent execution
-
-The current CLI accepts `--ephemeral` only with `codex exec`, not interactive `codex`. To execute a runbook through completion without persisted Codex session files:
+Once the procedure is stable, use `codex exec` to execute and report results. Return to an interactive session for unresolved issues:
 
 ```zsh
 codex exec --ephemeral \
-  -m gpt-5.6-luna \
+  -m "$(< codex-model.txt)" \
   -c 'model_reasoning_effort="medium"' \
-  --sandbox workspace-write \
+  -c 'sandbox_workspace_write.network_access=true' \
+  --approve-for-me \
+  --add-dir "$HOME/Downloads" \
+  --add-dir "/Volumes/EHDD/AIModels/Lora" \
   "Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
    Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
    Execute the runbook through completion, including its decisions and operations.
    Stop and report unresolved questions or failures. Do not edit the runbook."
 ```
-
-Configure any required external-directory write permissions and network access beforehand; `workspace-write` alone does not grant them. The runbook supplies the inputs and procedure.
-
-`exec` is non-interactive and ends after reporting; use the first command for ongoing guidance. Ephemeral mode does not remove shell history or change service-side retention. The selected model must be available to your account.
 
 ## Reference
 

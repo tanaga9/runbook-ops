@@ -2,6 +2,7 @@
 
 | Location | Responsibility |
 | --- | --- |
+| `codex-model.txt` | Shared model name read by Codex invocation commands |
 | `runbook.command` | macOS launcher for an interactive workspace |
 | `shell/` | Enter/leave a venv, isolated history, and prompt; no task logic |
 | `plugins/runbook-ops/` | Skills and policy for writing and following readable procedures |
@@ -26,3 +27,5 @@ for file in runbook.command shell/*.zsh shell/startup/.zshenv shell/startup/.zsh
   zsh -n "$file" || break
 done
 ```
+
+Document project-specific conventions and runnable examples. Link to official tool documentation for general settings and behavior; repeat only what is necessary to use this project.

@@ -21,12 +21,13 @@ Runme execution is not currently supported. These runbooks assume a persistent i
 
 Follow the documented Steps. Headings may name the action directly or use Check / Act / Verify, separately or combined. These are review perspectives, not required sections; the responsibilities below still apply.
 
-- Keep case inputs in the same shell. Read each command before executing it.
+- Read each command before executing it. Keep inputs in one shell or explicitly pass them between invocations.
+- Use task-specific variable names; zsh reserves names such as the read-only `status`.
 - **Check:** inspect state and collect evidence. Downloads and evidence files may be saved here when their effects are stated.
 - **Act:** perform the needed operation after reviewing targets and scope.
 - **Verify:** observe the actual result, using bounded read-only retries for delayed completion.
 - `READY` describes a particular check; it is not blanket approval. Stop on `STOP`; follow the stated branch on `DEFER` or `UNAVAILABLE`.
-- Keep recovery and optional actions separate from the normal path. After interruption, inspect before retrying.
+- Keep recovery and optional actions separate from the normal path. After interruption or a wrapper error, inspect actual results before retrying; the operation may already have completed.
 
 Use short native commands or visible Python. Helpers print data or reports; do not automatically evaluate their output. Agents perform operational changes only within explicit authorization. Full metadata is for AI investigation, not a checklist humans must read line by line.
 
@@ -34,6 +35,8 @@ Use short native commands or visible Python. Helpers print data or reports; do n
 
 See the [README](../README.md#use-the-skills) for Skill selection and CLI examples. Inputs and decision criteria come from the runbook; supply only overrides or narrower limits. The agent resolves its own environment rather than inheriting the operator's shell variables.
 
-Running does not edit the procedure. Unresolved decisions and failures stop execution unless the procedure provides a defer/skip branch. Required filesystem and network permissions must be available.
+Execution uses `run-runbook`; explicitly requested improvements use `develop-runbook`. Unresolved decisions and failures stop execution unless the procedure provides a defer/skip branch. Required filesystem and network permissions must be available.
 
 Direct path invocation uses this checkout's Skill. Installed plugin copies must be updated separately. For authoring rules, see the [policy](../plugins/runbook-ops/references/runbook-policy.md).
+
+For Codex settings and network restrictions, consult the official [configuration reference](https://developers.openai.com/codex/config-reference) and [security documentation](https://developers.openai.com/codex/security).
