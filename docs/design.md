@@ -6,6 +6,7 @@
 | `runbook.command` | macOS launcher for an interactive workspace |
 | `shell/` | Enter/leave a venv, isolated history, and prompt; no task logic |
 | `plugins/runbook-ops/` | Skills and policy for writing and following readable procedures |
+| `ops/prompts/` | Launch instructions, independent of individual runbook procedures |
 | `ops/inbox/` | Optional task briefs and execution improvement proposals for review |
 | `ops/runbooks/` | Case-specific goals, inputs, choices, operations, and verification |
 | `src/` | Small, domain-independent utilities; no case decisions or workflow execution |

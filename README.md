@@ -48,6 +48,7 @@ Keep one procedure per case under the project's `ops/runbooks/`; `ops/inbox/` is
 
 Run from this checkout root; workspace activation is optional. Both examples authorize Codex to execute the runbook.
 
+- **Instructions:** [ops/prompts/run-runbook.md](ops/prompts/run-runbook.md) supplies the shared execution prompt. The commands below append the mode and target runbook; file contents are read as text, not shell code.
 - **Model:** edit [codex-model.txt](codex-model.txt), containing one model name without quotes or comments. It also applies to the runbook's optional Codex recommendation.
 - **Paths:** for another case, change the runbook path and each `--add-dir` to match its external write locations.
 - **Permissions:** these examples enable automatic approval review and network access for API retrieval. Adjust them for the case; see the official [Codex configuration reference](https://developers.openai.com/codex/config-reference).
@@ -63,12 +64,9 @@ codex -m "$(< codex-model.txt)" \
   --approve-for-me \
   --add-dir "$HOME/Downloads" \
   --add-dir "/Volumes/EHDD/AIModels/Lora" \
-"Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
-Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
-Execute the runbook through completion, including its decisions and operations.
-When issues arise, pause the affected operation and resolve them with me.
-Do not edit the runbook, code, Skills, or documentation.
-Save actionable improvement proposals using the Skill's proposal workflow."
+  "$(< ops/prompts/run-runbook.md)
+Mode: interactive.
+Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md."
 ```
 
 ### Non-interactive execution
@@ -83,12 +81,9 @@ codex exec --ephemeral \
   --approve-for-me \
   --add-dir "$HOME/Downloads" \
   --add-dir "/Volumes/EHDD/AIModels/Lora" \
-"Use the run-runbook Skill at $PWD/plugins/runbook-ops/skills/run-runbook/SKILL.md.
-Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md.
-Execute the runbook through completion, including its decisions and operations.
-Stop dependent work on unresolved questions or failures.
-Do not edit the runbook, code, Skills, or documentation.
-Save actionable improvement proposals using the Skill's proposal workflow."
+  "$(< ops/prompts/run-runbook.md)
+Mode: non-interactive.
+Runbook: $PWD/ops/runbooks/organize-downloaded-model-pairs.md."
 ```
 
 ### Review and improve separately
